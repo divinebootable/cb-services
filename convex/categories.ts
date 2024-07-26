@@ -19,6 +19,8 @@ export const get = query({
                 });
 
         });
-        const categoriesWithSubcategories = await Promise.all(categoriesWithSubcategoriesRelation)
+        const categoriesWithSubcategories = await Promise.all(categoriesWithSubcategoriesRelation);
+
+        return categoriesWithSubcategories;
       }
 })

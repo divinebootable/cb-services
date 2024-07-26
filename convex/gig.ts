@@ -24,11 +24,15 @@ export const create = mutation({
             )
             .unique();
 
+            if(user === null){
+              return;
+            }
+
             const gigId = await ctx.db.insert("gigs", {
                 title: args.title,
                 description: args.description,
                 subcategoryId: args.subcategoryId as Id<"subcategories">,
-                sellerId: user?._id!,
+                sellerId: user._id!,
                 published: false,
                 clicks: 0,
             })
