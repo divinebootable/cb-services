@@ -109,5 +109,13 @@ export const get = query({
      };
 
      return gigWithSellerAndLastFulfillmentAndImages;
-    }
-})
+    },
+});
+
+export const isPublished = query({
+  args: { id: v.id("gigs") },
+  handler: async (ctx, args) => {
+      const gig = await ctx.db.get(args.id);
+      return gig?.published || false;
+  }
+});
