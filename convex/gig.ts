@@ -112,10 +112,55 @@ export const get = query({
     },
 });
 
-export const isPublished = query({
+  export const isPublished = query({
+    args: { id: v.id("gigs") },
+    handler: async (ctx, args) => {
+        const gig = await ctx.db.get(args.id);
+        return gig?.published || false;
+    }
+  });
+
+  export const publish = mutation({
+    args: { id: v.id("gigs") },
+    handler: async (ctx, args) => {
+        const gig = await ctx.db.get(args.id);
+        if (!gig) {
+            throw new Error("Gig not found");
+        }
+
+        const media = await ctx.db.query("gigMedia")
+            .withIndex("by_gigId", (q) => q.eq("gigId", gig._id))
+            .collect();
+
+        const offers = await ctx.db.query("offers")
+            .withIndex("by_gigId", (q) => q.eq("gigId", gig._id))
+            .collect();
+
+        if (media.length === 0 || gig.description === "" || offers.length !== 3) {
+            throw new Error("Gig needs at least one image to be published");
+        }
+
+        await ctx.db.patch(args.id, {
+            published: true,
+        });
+
+        return gig;
+    },
+});
+
+export const unpublish = mutation({
   args: { id: v.id("gigs") },
   handler: async (ctx, args) => {
       const gig = await ctx.db.get(args.id);
-      return gig?.published || false;
-  }
+
+      if (!gig) {
+          throw new Error("Gig not found");
+      }
+
+      await ctx.db.patch(args.id, {
+          published: false,
+      });
+
+      return gig;
+  },
 });
