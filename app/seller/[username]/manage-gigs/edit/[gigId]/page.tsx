@@ -96,6 +96,95 @@ const Edit = ({ params }: EditPageProps)=>{
              imageInput.current!.value = "";
         
        }
+
+    const onPublish = async () => {
+        console.log(published)
+        if (!published) {
+            publish({ id: params.gigId as Id<"gigs"> })
+                .catch((error) => {
+                    console.log(error);
+                    toast.error("Failed to publish. Please make sure there are at least 1 image, 3 offers and a description.");
+                });
+        }
+        else {
+            unpublish({ id: params.gigId as Id<"gigs"> })
+        }
+    }
+
+    const onDelete = async () => {
+        remove({ id: params.gigId as Id<"gigs"> });
+        router.back();
+    };
+
+    return (
+      <>
+        <div className="space-y-12 2xl:px-64 xl:px-36 md:px-12 px-12">
+                <div className="flex justify-end pr-2 space-x-2">
+                    <Button disabled={publishPending || unpublishPending} variant={"default"} onClick={onPublish}>
+                        {published ? "Unpublish" : "Publish"}
+                    </Button>
+                    <Link href={`/${gig.seller.username}/${gig._id}`}>
+                        <Button disabled={removePending} variant={"secondary"}>
+                            Preview
+                        </Button>
+                    </Link>
+                    <Button disabled={removePending} variant={"secondary"} onClick={onDelete}>
+                        Delete
+                    </Button>
+                </div>
+
+                <TitleEditor
+                    id={gig._id}
+                    title={gig.title}
+                />
+                <div className="w-[800px]">
+                    <Images
+                        images={gig.images}
+                        title={gig.title}
+                        allowDelete={true}
+
+                    />
+                </div>
+                <form onSubmit={handleImageUpload} className="space-y-2">
+                    <Label className="font-normal">Add up to 5 images:</Label>
+                    <div className="flex space-x-2">
+                        <Input
+                            id="image"
+                            type="file"
+                            accept="image/*"
+                            ref={imageInput}
+                            onChange={(event) => setSelectedImages(Array.from(event.target.files || []))}
+                            multiple
+                            className="cursor-pointer w-fit bg-zinc-100 text-zinc-700 border-zinc-300 hover:bg-zinc-200 hover:border-zinc-400 focus:border-zinc-400 focus:bg-zinc-200"
+                            disabled={selectedImages.length !== 0}
+                        />
+                        <Button
+                            type="submit"
+                            disabled={selectedImages.length === 0}
+                            className="w-fit"
+                        >Upload Image</Button>
+                    </div>
+                </form>
+                <div className="flex rounded-md border border-zinc-300 items-center space-x-4 w-fit p-2 cursor-default">
+                    <p className="text-muted-foreground">👨‍🎨 Creator: {"Ngwa"}</p>
+                </div>
+
+                <OffersEditor
+                    gigId={gig._id}
+                />
+
+                <h2 className="font-semibold">About this gig</h2>
+            </div>
+
+
+            <Description
+                initialContent={gig.description}
+                editable={true}
+                className="pb-40 mt-12 2xl:px-[200px] xl:px-[90px] xs:px-[17px]"
+                gigId={gig._id}
+            />
+      </>
+    )
 }
 
 export default Edit
