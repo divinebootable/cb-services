@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
@@ -6,96 +6,99 @@ import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
-import Image from "next/image";
-import Link from "next/link"
+import Link from "next/link";
 import { FormEvent, useRef, useState } from "react";
-import { useRouter } from "next/navigation"
 
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { undefined } from "zod";
+import { Description } from "@/components/description";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Images } from "@/components/images";
+import { TitleEditor } from "@/components/title-editor";
 
-interface EditPageProps {
-    params:{
+import { Label } from "@/components/ui/label";
+import { OffersEditor } from "./_components/offers-editor";
+
+
+
+interface EditdPageProps {
+    params: {
         gigId: string;
-    }
-}
+    };
+};
 
-const Edit = ({ params }: EditPageProps)=>{
-      const gig = useQuery(api.gig.get,{id: params.gigId as Id<"gigs"> })
-      const published = useQuery(api.gig.isPublished, {id: params.gigId as Id<"gigs">});
-      const {
+const Edit = ({ params }: EditdPageProps) => {
+    const gig = useQuery(api.gig.get, { id: params.gigId as Id<"gigs"> })
+    const published = useQuery(api.gig.isPublished, { id: params.gigId as Id<"gigs"> });
+    const {
         mutate: remove,
         pending: removePending,
-
-      } =useApiMutation(api.gig.remove);
-      const {
+    } = useApiMutation(api.gig.remove);
+    const {
         mutate: publish,
-        pending: publishPending
-
-      }= useApiMutation(api.gig.publish);
-      const {
+        pending: publishPending,
+    } = useApiMutation(api.gig.publish);
+    const {
         mutate: unpublish,
         pending: unpublishPending,
-      }= useApiMutation(api.gig.unpublish);
-      const router = useRouter();
+    } = useApiMutation(api.gig.unpublish);
+    const router = useRouter();
 
-      const identity = useAuth();
+    const identity = useAuth();
 
-      const generateUploadUrl = useMutation(api.gigMedia.generateUploadUrl);
+    const generateUploadUrl = useMutation(api.gigMedia.generateUploadUrl);
 
-      const imageInput = useRef<HTMLInputElement>(null);
-      const [selectedImages, setSelectedImages] = useState<File[]>([]);
-      const sendImage = useMutation(api.gigMedia.sendImage);
+    const imageInput = useRef<HTMLInputElement>(null);
+    const [selectedImages, setSelectedImages] = useState<File[]>([]);
+    const sendImage = useMutation(api.gigMedia.sendImage);
 
-       if (!identity){
-           throw new Error("Unauthorized");
-       }
 
-       // undefined means it's still retrieving
-       if(gig === undefined || published === undefined){
-          return null;
-       }
+    if (!identity) {
+        throw new Error("Unauthorized");
+    }
 
-       if( gig === null){
-        return <div>Not foound</div>;
-       }
+    // Undefined means it's still retrieving
+    if (gig === undefined || published === undefined) {
+        return null;
+    }
 
-       async function handleImageUpload(event:FormEvent) {
-             event.preventDefault();
-             if(gig === undefined) return ;
+    if (gig === null) {
+        return <div>Not found</div>;
+    }
 
-             const nonNullableGig = gig as Doc<"gigs">;
+    async function handleSendImage(event: FormEvent) {
+        event.preventDefault();
+        if (gig === undefined) return;
 
-             // Step 1: get a short-lived upload URL
-             const postUrl = await generateUploadUrl();
+        const nonNullableGig = gig as Doc<"gigs">;
 
-             await Promise.all(selectedImages.map(async (image)=>{
-                  const result = await fetch(postUrl, {
-                       method: "POST",
-                       headers: {"Content-Type": image.type},
-                       body: image
+        // Step 1: Get a short-lived upload URL
+        const postUrl = await generateUploadUrl();
 
-                  });
+        await Promise.all(selectedImages.map(async (image) => {
+            const result = await fetch(postUrl, {
+                method: "POST",
+                headers: { "Content-Type": image.type },
+                body: image,
+            });
 
-                  const json = await result.json();
+            const json = await result.json();
 
-                  if (!result.ok){
-                    throw new Error(`Upload failed: ${JSON.stringify(json)}`);
-                  }
-                  const { storageId } = json
-                  //step 2: Save the newlt allocated storage id to th database
-                  await sendImage({storageId, format: "image", gigId:nonNullableGig._id})
-                  .catch((error)=>{
-                      console.log(error);
-                      toast.error("Maximu 5 files reached.");
-                  });
-             }));
-             setSelectedImages([]);
-             imageInput.current!.value = "";
-        
-       }
+            if (!result.ok) {
+                throw new Error(`Upload failed: ${JSON.stringify(json)}`);
+            }
+            const { storageId } = json;
+            // Step 3: Save the newly allocated storage id to the database
+            await sendImage({ storageId, format: "image", gigId: nonNullableGig._id })
+                .catch((error) => {
+                    console.log(error);
+                    toast.error("Maximum 5 files reached.");
+                });
+        }));
+
+        setSelectedImages([]);
+        imageInput.current!.value = "";
+    }
 
     const onPublish = async () => {
         console.log(published)
@@ -116,9 +119,10 @@ const Edit = ({ params }: EditPageProps)=>{
         router.back();
     };
 
+
     return (
-      <>
-        <div className="space-y-12 2xl:px-64 xl:px-36 md:px-12 px-12">
+        <>
+            <div className="space-y-12 2xl:px-64 xl:px-36 md:px-12 px-12">
                 <div className="flex justify-end pr-2 space-x-2">
                     <Button disabled={publishPending || unpublishPending} variant={"default"} onClick={onPublish}>
                         {published ? "Unpublish" : "Publish"}
@@ -145,7 +149,7 @@ const Edit = ({ params }: EditPageProps)=>{
 
                     />
                 </div>
-                <form onSubmit={handleImageUpload} className="space-y-2">
+                <form onSubmit={handleSendImage} className="space-y-2">
                     <Label className="font-normal">Add up to 5 images:</Label>
                     <div className="flex space-x-2">
                         <Input
@@ -166,7 +170,7 @@ const Edit = ({ params }: EditPageProps)=>{
                     </div>
                 </form>
                 <div className="flex rounded-md border border-zinc-300 items-center space-x-4 w-fit p-2 cursor-default">
-                    <p className="text-muted-foreground">👨‍🎨 Creator: {"Ngwa"}</p>
+                    <p className="text-muted-foreground">👨‍🎨 Creator: {"Vuk Rosic"}</p>
                 </div>
 
                 <OffersEditor
@@ -183,8 +187,9 @@ const Edit = ({ params }: EditPageProps)=>{
                 className="pb-40 mt-12 2xl:px-[200px] xl:px-[90px] xs:px-[17px]"
                 gigId={gig._id}
             />
-      </>
+
+        </>
     )
 }
 
-export default Edit
+export default Edit;
