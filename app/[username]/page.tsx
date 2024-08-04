@@ -46,7 +46,7 @@ const SellerPage = ({
                         <p>{seller.about}</p>
                     </div>
                     <div>
-                        <p className="font-bold">Skills</p>
+                        <p className="font-bold">Services</p>
                         <p>{skillsString}</p>
                     </div>
                 </div>
